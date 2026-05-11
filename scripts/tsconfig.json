@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2020"],
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "allowImportingTsExtensions": false,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["./**/*", "../src/data/**/*", "../src/types/**/*"]
+}

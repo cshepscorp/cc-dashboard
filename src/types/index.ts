@@ -13,22 +13,22 @@ export interface Account {
   id: string
   name: string
   type: AccountType
-  last4?: string
-  issuer?: string          // Chase, Amex, Capital One, etc.
+  last4?: string | null
+  issuer?: string | null   // Chase, Amex, Capital One, etc.
   due_day: number          // day of month (1–31)
-  credit_limit?: number
-  current_balance?: number
-  apr?: number             // annual percentage rate e.g. 24.99
-  promo_apr?: number       // 0 for 0% promos
-  promo_ends?: string      // ISO date string e.g. '2026-07-01'
-  portal_url?: string
+  credit_limit?: number | null
+  current_balance?: number | null
+  apr?: number | null      // annual percentage rate e.g. 24.99
+  promo_apr?: number | null // 0 for 0% promos
+  promo_ends?: string | null // ISO date string e.g. '2026-07-01'
+  portal_url?: string | null
   is_personal: boolean     // e.g. loan from parents
   is_active: boolean
-  notes?: string
+  notes?: string | null
   // installment / loan specific
-  monthly_payment?: number // fixed payment amount
-  payoff_date?: string     // ISO date string
-  original_balance?: number
+  monthly_payment?: number | null // fixed payment amount
+  payoff_date?: string | null     // ISO date string
+  original_balance?: number | null
   created_at?: string
 }
 

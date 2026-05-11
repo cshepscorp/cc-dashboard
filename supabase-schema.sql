@@ -68,15 +68,15 @@ create policy "Public read payments"
   on payments for select using (true);
 
 -- Only authenticated owner can write
-create policy "Owner insert/update accounts"
+create policy "Owner write accounts"
   on accounts for all
-  using (auth.jwt() ->> 'email' = current_setting('app.owner_email', true))
-  with check (auth.jwt() ->> 'email' = current_setting('app.owner_email', true));
+  using (auth.jwt() ->> 'email' = 'sheppard.christy@gmail.com')
+  with check (auth.jwt() ->> 'email' = 'sheppard.christy@gmail.com');
 
-create policy "Owner insert/update payments"
+create policy "Owner write payments"
   on payments for all
-  using (auth.jwt() ->> 'email' = current_setting('app.owner_email', true))
-  with check (auth.jwt() ->> 'email' = current_setting('app.owner_email', true));
+  using (auth.jwt() ->> 'email' = 'sheppard.christy@gmail.com')
+  with check (auth.jwt() ->> 'email' = 'sheppard.christy@gmail.com');
 
 -- ============================================================
 -- After running the schema, seed your accounts:
