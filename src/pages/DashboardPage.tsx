@@ -80,6 +80,23 @@ export function DashboardPage() {
         payments={allPayments}
         month={selectedMonth}
         promoAlerts={promoAlerts}
+        onLatePaymentClick={(account, payment) => {
+          setSelectedAccount(account)
+          setSelectedPayment(payment)
+          setAddPaymentOpen(true)
+        }}
+      />
+
+      {/* Payment table — primary interaction */}
+      <PaymentTable
+        accounts={accounts}
+        payments={monthPayments}
+        month={selectedMonth}
+        onRowClick={(account, payment) => {
+          setSelectedAccount(account)
+          setSelectedPayment(payment)
+          setAddPaymentOpen(true)
+        }}
       />
 
       {/* Two-column: upcoming + chart */}
@@ -91,18 +108,6 @@ export function DashboardPage() {
           <PaidVsDueChart payments={allPayments} />
         </div>
       </div>
-
-      {/* Payment table */}
-      <PaymentTable
-        accounts={accounts}
-        payments={monthPayments}
-        month={selectedMonth}
-        onRowClick={(account, payment) => {
-          setSelectedAccount(account)
-          setSelectedPayment(payment)
-          setAddPaymentOpen(true)
-        }}
-      />
 
       <AddPaymentDialog
         key={selectedAccount?.id ?? 'global'}
