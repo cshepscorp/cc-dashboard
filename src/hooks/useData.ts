@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { Database } from '@/lib/database.types'
 import type { Account, Payment } from '@/types'
+
+type AccountInsert = Database['public']['Tables']['accounts']['Insert']
+type AccountUpdate = Database['public']['Tables']['accounts']['Update']
+type PaymentInsert = Database['public']['Tables']['payments']['Insert']
 
 // ─── Accounts ─────────────────────────────────────────────────────────────────
 
@@ -24,8 +29,8 @@ export function useUpsertAccount() {
   return useMutation({
     mutationFn: async (account: Partial<Account> & { id?: string }) => {
       const { data, error } = account.id
-        ? await supabase.from('accounts').update(account).eq('id', account.id).select().single()
-        : await supabase.from('accounts').insert(account).select().single()
+        ? await supabase.from('accounts').update(account as AccountUpdate).eq('id', account.id).select().single()
+        : await supabase.from('accounts').insert(account as AccountInsert).select().single()
       if (error) throw error
       return data
     },
@@ -88,7 +93,7 @@ export function useUpsertPayment() {
       // Upsert on (account_id, month) — update if exists, insert if not
       const { data, error } = await supabase
         .from('payments')
-        .upsert(payment, { onConflict: 'account_id,month' })
+        .upsert(payment as PaymentInsert, { onConflict: 'account_id,month' })
         .select()
         .single()
       if (error) throw error
