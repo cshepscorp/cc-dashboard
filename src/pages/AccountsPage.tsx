@@ -80,6 +80,7 @@ export function AccountsPage() {
       <AccountsTable accounts={accounts} onEdit={handleEdit} />
 
       <AddAccountDialog
+        key={editingAccount?.id ?? 'new'}
         open={dialogOpen}
         onClose={handleCloseDialog}
         existingAccount={editingAccount}

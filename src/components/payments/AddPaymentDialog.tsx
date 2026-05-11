@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Account, Payment, PaymentStatus } from '@/types'
-import { useUpsertPayment } from '@/hooks/useData'
+import { useUpsertPayment, useDeletePayment } from '@/hooks/useData'
 import { STATUS_LABELS } from '@/lib/utils'
 import { X } from 'lucide-react'
 
@@ -9,15 +9,27 @@ interface Props {
   onClose: () => void
   accounts: Account[]
   month: string
+  defaultAccount?: Account
   existingPayment?: Payment
 }
 
 const STATUSES: PaymentStatus[] = ['paid', 'partial', 'unpaid', 'late', 'autopay', 'na']
+const FIXED_PAYMENT_TYPES = new Set(['installment', 'personal', 'auto_loan', 'mortgage'])
 
-export function AddPaymentDialog({ open, onClose, accounts, month, existingPayment }: Props) {
+function initialAmtDue(existingPayment?: Payment, defaultAccount?: Account): string {
+  if (existingPayment?.amt_due != null) return existingPayment.amt_due.toString()
+  if (defaultAccount?.monthly_payment && FIXED_PAYMENT_TYPES.has(defaultAccount.type)) {
+    return defaultAccount.monthly_payment.toString()
+  }
+  return ''
+}
+
+export function AddPaymentDialog({ open, onClose, accounts, month, defaultAccount, existingPayment }: Props) {
   const upsert = useUpsertPayment()
-  const [accountId, setAccountId] = useState(existingPayment?.account_id ?? '')
-  const [amtDue, setAmtDue] = useState(existingPayment?.amt_due?.toString() ?? '')
+  const remove = useDeletePayment()
+
+  const [accountId, setAccountId] = useState(defaultAccount?.id ?? existingPayment?.account_id ?? '')
+  const [amtDue, setAmtDue] = useState(initialAmtDue(existingPayment, defaultAccount))
   const [amtPaid, setAmtPaid] = useState(existingPayment?.amt_paid?.toString() ?? '')
   const [datePaid, setDatePaid] = useState(existingPayment?.date_paid ?? '')
   const [status, setStatus] = useState<PaymentStatus>(existingPayment?.status ?? 'unpaid')
@@ -26,6 +38,16 @@ export function AddPaymentDialog({ open, onClose, accounts, month, existingPayme
   const [error, setError] = useState('')
 
   if (!open) return null
+
+  const handleAccountChange = (id: string) => {
+    setAccountId(id)
+    if (!amtDue) {
+      const acct = accounts.find(a => a.id === id)
+      if (acct?.monthly_payment && FIXED_PAYMENT_TYPES.has(acct.type)) {
+        setAmtDue(acct.monthly_payment.toString())
+      }
+    }
+  }
 
   const handleSubmit = async () => {
     if (!accountId) { setError('Please select an account.'); return }
@@ -48,6 +70,19 @@ export function AddPaymentDialog({ open, onClose, accounts, month, existingPayme
     }
   }
 
+  const handleDelete = async () => {
+    if (!existingPayment?.id) return
+    if (!window.confirm('Delete this payment record?')) return
+    try {
+      await remove.mutateAsync(existingPayment.id)
+      onClose()
+    } catch (e: any) {
+      setError(e.message ?? 'Something went wrong.')
+    }
+  }
+
+  const isPending = upsert.isPending || remove.isPending
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-card border rounded-xl shadow-lg w-full max-w-md mx-4 p-6 space-y-4">
@@ -61,20 +96,32 @@ export function AddPaymentDialog({ open, onClose, accounts, month, existingPayme
         </div>
 
         <div className="space-y-3 text-sm">
-          {/* Account */}
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground font-medium">Account</label>
-            <select
-              value={accountId}
-              onChange={e => setAccountId(e.target.value)}
-              className="w-full border rounded-md px-3 py-2 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select account…</option>
-              {accounts.filter(a => a.is_active).map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Account — locked when opened from a row, selectable from the Log button */}
+          {defaultAccount ? (
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Account</label>
+              <div className="px-3 py-2 border rounded-md bg-muted/40 text-foreground text-sm font-medium">
+                {defaultAccount.name}
+                {defaultAccount.last4 && (
+                  <span className="text-muted-foreground font-normal ml-1">···{defaultAccount.last4}</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Account</label>
+              <select
+                value={accountId}
+                onChange={e => handleAccountChange(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select account…</option>
+                {accounts.filter(a => a.is_active).map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Amounts */}
           <div className="grid grid-cols-2 gap-3">
@@ -154,20 +201,33 @@ export function AddPaymentDialog({ open, onClose, accounts, month, existingPayme
 
         {error && <p className="text-xs text-destructive">{error}</p>}
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-md hover:bg-secondary transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={upsert.isPending}
-            className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-          >
-            {upsert.isPending ? 'Saving…' : 'Save payment'}
-          </button>
+        <div className="flex justify-between gap-2 pt-2">
+          {existingPayment?.id ? (
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              className="px-3 py-2 text-sm rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50 transition-colors"
+            >
+              Delete
+            </button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm rounded-md hover:bg-secondary transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            >
+              {upsert.isPending ? 'Saving…' : 'Save'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

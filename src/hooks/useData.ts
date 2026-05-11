@@ -86,6 +86,17 @@ export function useAllPayments() {
   })
 }
 
+export function useDeletePayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('payments').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['payments'] }),
+  })
+}
+
 export function useUpsertPayment() {
   const qc = useQueryClient()
   return useMutation({

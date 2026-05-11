@@ -10,9 +10,10 @@ interface Props {
   accounts: Account[]
   payments: Payment[]
   month: string
+  onRowClick?: (account: Account, payment?: Payment) => void
 }
 
-export function PaymentTable({ accounts, payments, month }: Props) {
+export function PaymentTable({ accounts, payments, month, onRowClick }: Props) {
   const activeAccounts = accounts.filter(a => a.is_active)
 
   return (
@@ -43,7 +44,8 @@ export function PaymentTable({ accounts, payments, month }: Props) {
               return (
                 <tr
                   key={account.id}
-                  className="border-b last:border-0 hover:bg-muted/20 transition-colors"
+                  className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer"
+                  onClick={() => onRowClick?.(account, payment)}
                 >
                   {/* Account name */}
                   <td className="px-4 py-3">
@@ -112,6 +114,7 @@ export function PaymentTable({ accounts, payments, month }: Props) {
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-xs text-primary hover:underline whitespace-nowrap"
                         title={`Pay ${account.name}`}
+                        onClick={e => e.stopPropagation()}
                       >
                         Pay <ExternalLink className="w-3 h-3" />
                       </a>

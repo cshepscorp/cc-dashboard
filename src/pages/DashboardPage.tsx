@@ -19,6 +19,8 @@ export function DashboardPage() {
   const { isOwner } = useAuth()
   const [selectedMonth, setSelectedMonth] = useState(currentMonth())
   const [addPaymentOpen, setAddPaymentOpen] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<typeof accounts[0] | undefined>()
+  const [selectedPayment, setSelectedPayment] = useState<(typeof allPayments)[0] | undefined>()
 
   // Use live Supabase data for owner, fallback to seed for demo
   const { data: liveAccounts } = useAccounts()
@@ -95,13 +97,25 @@ export function DashboardPage() {
         accounts={accounts}
         payments={monthPayments}
         month={selectedMonth}
+        onRowClick={(account, payment) => {
+          setSelectedAccount(account)
+          setSelectedPayment(payment)
+          setAddPaymentOpen(true)
+        }}
       />
 
       <AddPaymentDialog
+        key={selectedAccount?.id ?? 'global'}
         open={addPaymentOpen}
-        onClose={() => setAddPaymentOpen(false)}
+        onClose={() => {
+          setAddPaymentOpen(false)
+          setSelectedAccount(undefined)
+          setSelectedPayment(undefined)
+        }}
         accounts={accounts}
         month={selectedMonth}
+        defaultAccount={selectedAccount}
+        existingPayment={selectedPayment}
       />
     </div>
   )
