@@ -9,6 +9,9 @@ interface Props {
   existingAccount?: Account
 }
 
+const toSlug = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 const ACCOUNT_TYPES: AccountType[] = ['credit_card', 'installment', 'personal', 'mortgage', 'auto_loan']
 
 const TYPE_LABELS: Record<AccountType, string> = {
@@ -51,7 +54,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
 
     try {
       const accountData: Partial<Account> & { id?: string } = {
-        ...(existingAccount?.id ? { id: existingAccount.id } : {}),
+        id: existingAccount?.id ?? toSlug(name),
         name,
         type,
         last4: last4 || null,
