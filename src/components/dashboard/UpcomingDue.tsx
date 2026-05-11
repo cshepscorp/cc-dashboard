@@ -1,5 +1,5 @@
 import type { UpcomingPayment } from '@/types'
-import { formatCurrency, STATUS_LABELS, STATUS_VARIANTS } from '@/lib/utils'
+import { STATUS_LABELS, STATUS_VARIANTS } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ExternalLink } from 'lucide-react'
 

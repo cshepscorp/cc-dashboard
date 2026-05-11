@@ -125,7 +125,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
               <label className="text-xs text-muted-foreground font-medium">Last 4 digits</label>
               <input
                 type="text"
-                maxLength="4"
+                maxLength={4}
                 value={last4}
                 onChange={e => setLast4(e.target.value.replace(/\D/g, ''))}
                 placeholder="1234"

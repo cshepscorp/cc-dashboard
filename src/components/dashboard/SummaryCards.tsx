@@ -7,10 +7,6 @@ interface Props {
 }
 
 export function SummaryCards({ summary }: Props) {
-  const paymentRatio = summary.total_due > 0
-    ? Math.round((summary.total_paid / summary.total_due) * 100)
-    : 0
-
   const cards = [
     {
       label: 'Total paid',

@@ -1,4 +1,4 @@
-import { format, addDays, differenceInDays, parseISO, setDate } from 'date-fns'
+import { format, differenceInDays, parseISO, setDate } from 'date-fns'
 import type { Account, Payment, PaymentStatus, UpcomingPayment, PromoAlert, MonthSummary } from '@/types'
 
 // ─── Currency ─────────────────────────────────────────────────────────────────
