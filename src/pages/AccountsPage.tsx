@@ -3,17 +3,19 @@ import type { Account } from '@/types'
 import { useAccounts } from '@/hooks/useData'
 import { useAuth } from '@/hooks/useAuth'
 import { AddAccountDialog } from '@/components/accounts/AddAccountDialog'
+import { AccountDetailDialog } from '@/components/accounts/AccountDetailDialog'
 import { AccountsTable } from '@/components/accounts/AccountsTable'
 
 export function AccountsPage() {
   const { isOwner } = useAuth()
   const { data: accounts = [], isLoading, error } = useAccounts()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | undefined>()
 
-  const handleEdit = (account: Account) => {
+  const handleRowClick = (account: Account) => {
     setEditingAccount(account)
-    setDialogOpen(true)
+    setDetailOpen(true)
   }
 
   const handleCloseDialog = () => {
@@ -77,7 +79,17 @@ export function AccountsPage() {
         </button>
       </div>
 
-      <AccountsTable accounts={accounts} onEdit={handleEdit} />
+      <AccountsTable accounts={accounts} onRowClick={handleRowClick} />
+
+      {editingAccount && (
+        <AccountDetailDialog
+          key={`detail-${editingAccount.id}`}
+          open={detailOpen}
+          onClose={() => { setDetailOpen(false); setEditingAccount(undefined) }}
+          account={editingAccount}
+          onEdit={() => { setDetailOpen(false); setDialogOpen(true) }}
+        />
+      )}
 
       <AddAccountDialog
         key={editingAccount?.id ?? 'new'}

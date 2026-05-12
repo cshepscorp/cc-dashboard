@@ -1,38 +1,21 @@
-import { useState } from 'react'
 import type { Account } from '@/types'
-import { useDeactivateAccount } from '@/hooks/useData'
 import { formatCurrency } from '@/lib/utils'
-import { Edit2, Trash2, ExternalLink } from 'lucide-react'
+import { ExternalLink, ChevronRight } from 'lucide-react'
 
 interface Props {
   accounts: Account[]
-  onEdit: (account: Account) => void
+  onRowClick: (account: Account) => void
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  credit_card: '💳 Credit Card',
-  installment: '📦 Installment',
-  personal: '👥 Personal',
-  mortgage: '🏠 Mortgage',
-  auto_loan: '🚗 Auto Loan',
+  credit_card: 'Credit Card',
+  installment: 'Installment',
+  personal: 'Personal',
+  mortgage: 'Mortgage',
+  auto_loan: 'Auto Loan',
 }
 
-export function AccountsTable({ accounts, onEdit }: Props) {
-  const deactivate = useDeactivateAccount()
-  const [deactivatingId, setDeactivatingId] = useState<string | null>(null)
-
-  const handleDeactivate = async (id: string) => {
-    if (!window.confirm('Are you sure you want to deactivate this account? It will be hidden from the dashboard.')) {
-      return
-    }
-    setDeactivatingId(id)
-    try {
-      await deactivate.mutateAsync(id)
-    } finally {
-      setDeactivatingId(null)
-    }
-  }
-
+export function AccountsTable({ accounts, onRowClick }: Props) {
   if (accounts.length === 0) {
     return (
       <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground text-sm">
@@ -42,123 +25,135 @@ export function AccountsTable({ accounts, onEdit }: Props) {
   }
 
   return (
-    <div className="rounded-xl border overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="rounded-xl border bg-card overflow-hidden">
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="text-left px-4 py-3 font-semibold">Account</th>
-              <th className="text-left px-4 py-3 font-semibold">Type</th>
-              <th className="text-right px-4 py-3 font-semibold">Due Day</th>
-              <th className="text-left px-4 py-3 font-semibold">APR</th>
-              <th className="text-left px-4 py-3 font-semibold">Monthly Payment</th>
-              <th className="text-left px-4 py-3 font-semibold">Notes</th>
-              <th className="text-right px-4 py-3 font-semibold">Actions</th>
+            <tr className="border-b bg-muted/40">
+              <th className="text-left px-4 py-2.5 text-xs text-muted-foreground font-medium">Account</th>
+              <th className="text-left px-4 py-2.5 text-xs text-muted-foreground font-medium">Type</th>
+              <th className="text-right px-4 py-2.5 text-xs text-muted-foreground font-medium">Due day</th>
+              <th className="text-left px-4 py-2.5 text-xs text-muted-foreground font-medium">APR</th>
+              <th className="text-left px-4 py-2.5 text-xs text-muted-foreground font-medium">Monthly payment</th>
+              <th className="text-left px-4 py-2.5 text-xs text-muted-foreground font-medium">Notes</th>
+              <th className="px-4 py-2.5"></th>
             </tr>
           </thead>
           <tbody>
             {accounts.map(account => (
-              <tr key={account.id} className="border-b hover:bg-muted/30 transition-colors">
+              <tr
+                key={account.id}
+                className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer"
+                onClick={() => onRowClick(account)}
+              >
                 <td className="px-4 py-3">
-                  <div className="space-y-0.5">
-                    <div className="font-medium">{account.name}</div>
-                    {account.last4 && (
-                      <div className="text-xs text-muted-foreground">•••• {account.last4}</div>
-                    )}
-                    {account.issuer && (
-                      <div className="text-xs text-muted-foreground">{account.issuer}</div>
-                    )}
-                  </div>
+                  <div className="font-medium">{account.name}</div>
+                  {account.last4 && <div className="text-xs text-muted-foreground">···{account.last4}</div>}
+                  {account.issuer && <div className="text-xs text-muted-foreground">{account.issuer}</div>}
                 </td>
-                <td className="px-4 py-3 text-xs">
-                  <span className="inline-block bg-secondary px-2.5 py-1 rounded font-medium">
-                    {TYPE_LABELS[account.type] || account.type}
-                  </span>
+                <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                  {TYPE_LABELS[account.type] ?? account.type}
                 </td>
-                <td className="px-4 py-3 text-right font-medium">{account.due_day}</td>
-                <td className="px-4 py-3">
-                  {account.promo_apr !== undefined && account.promo_apr !== null ? (
-                    <div className="space-y-1">
-                      <div className="text-xs text-orange-600 font-medium">
-                        {account.promo_apr}%
-                        {account.promo_ends && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            (ends {new Date(account.promo_ends).toLocaleDateString()})
-                          </span>
-                        )}
-                      </div>
-                      {account.apr && (
+                <td className="px-4 py-3 text-right text-sm">{account.due_day}</td>
+                <td className="px-4 py-3 text-sm">
+                  {account.promo_apr != null ? (
+                    <div>
+                      <span className="text-orange-600 font-medium">{account.promo_apr}% promo</span>
+                      {account.promo_ends && (
+                        <div className="text-xs text-muted-foreground">
+                          ends {new Date(account.promo_ends).toLocaleDateString()}
+                        </div>
+                      )}
+                      {account.apr != null && (
                         <div className="text-xs text-muted-foreground">{account.apr}% after</div>
                       )}
                     </div>
-                  ) : account.apr ? (
-                    <div>{account.apr}%</div>
+                  ) : account.apr != null ? (
+                    <span>{account.apr}%</span>
                   ) : (
-                    <div className="text-muted-foreground">—</div>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
-                  {account.monthly_payment ? (
+                <td className="px-4 py-3 text-sm">
+                  {account.monthly_payment != null ? (
                     <div>
                       <div>{formatCurrency(account.monthly_payment)}</div>
                       {account.payoff_date && (
                         <div className="text-xs text-muted-foreground">
-                          Payoff: {new Date(account.payoff_date).toLocaleDateString()}
+                          Payoff {new Date(account.payoff_date).toLocaleDateString()}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="text-muted-foreground">—</div>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs">
-                  <div className="space-y-1">
-                    {account.is_personal && (
-                      <span className="inline-block bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-200 px-2 py-0.5 rounded text-xs font-medium">
-                        Personal
-                      </span>
-                    )}
-                    {account.notes && (
-                      <div className="text-muted-foreground truncate max-w-xs" title={account.notes}>
-                        {account.notes}
-                      </div>
-                    )}
-                  </div>
+                <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">
+                  {account.is_personal && <span className="text-purple-500 mr-1">Personal ·</span>}
+                  {account.notes}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    {account.portal_url && (
-                      <a
-                        href={account.portal_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1 rounded hover:bg-secondary"
-                        title="Open payment portal"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => onEdit(account)}
-                      className="p-1 rounded hover:bg-secondary"
-                      title="Edit account"
+                  {account.portal_url && account.portal_url !== '#' && (
+                    <a
+                      href={account.portal_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-primary hover:underline whitespace-nowrap"
+                      title={`Pay ${account.name}`}
+                      onClick={e => e.stopPropagation()}
                     >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeactivate(account.id)}
-                      className="p-1 rounded hover:bg-destructive/10 text-destructive hover:text-destructive disabled:opacity-50"
-                      title="Deactivate account"
-                      disabled={deactivatingId === account.id}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                      Pay <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="md:hidden divide-y">
+        {accounts.map(account => (
+          <div
+            key={account.id}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 active:bg-muted/30 transition-colors cursor-pointer"
+            onClick={() => onRowClick(account)}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-medium text-sm">{account.name}</span>
+                {account.last4 && (
+                  <span className="text-xs text-muted-foreground">···{account.last4}</span>
+                )}
+                {account.is_personal && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-medium">
+                    Personal
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-[11px] text-muted-foreground">
+                  {TYPE_LABELS[account.type] ?? account.type}
+                </span>
+                <span className="text-[11px] text-muted-foreground">· Due {account.due_day}</span>
+                {account.promo_apr != null ? (
+                  <span className="text-[11px] text-orange-600 font-medium">· {account.promo_apr}% promo</span>
+                ) : account.apr != null ? (
+                  <span className="text-[11px] text-muted-foreground">· {account.apr}% APR</span>
+                ) : null}
+                {account.monthly_payment != null && (
+                  <span className="text-[11px] text-muted-foreground">
+                    · {formatCurrency(account.monthly_payment)}/mo
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </div>
+        ))}
       </div>
     </div>
   )
