@@ -52,6 +52,24 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['payments']['Insert']>
         Relationships: []
       }
+      mortgage_payments: {
+        Row: {
+          id: string
+          account_id: string
+          month: string
+          principal: number | null
+          extra_principal: number | null
+          interest: number | null
+          escrow: number | null
+          total_paid: number | null
+          date_paid: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['mortgage_payments']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['mortgage_payments']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

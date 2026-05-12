@@ -2,11 +2,12 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
-import type { Account, Payment } from '@/types'
+import type { Account, Payment, MortgagePayment } from '@/types'
 import { currentMonth } from '@/lib/utils'
 
 type AccountInsert = Database['public']['Tables']['accounts']['Insert']
 type PaymentInsert = Database['public']['Tables']['payments']['Insert']
+type MortgagePaymentInsert = Database['public']['Tables']['mortgage_payments']['Insert']
 
 // ─── Accounts ─────────────────────────────────────────────────────────────────
 
@@ -142,6 +143,101 @@ export function useAutoCreateAutopayPayments(
   }, [accounts, payments, month, isOwner, qc])
 }
 
+
+// ─── Mortgage Payments ────────────────────────────────────────────────────────
+
+export function useMortgagePayments(accountId?: string) {
+  return useQuery({
+    queryKey: ['mortgage_payments', accountId],
+    queryFn: async (): Promise<MortgagePayment[]> => {
+      let query = supabase
+        .from('mortgage_payments')
+        .select('*')
+        .order('month', { ascending: false })
+      if (accountId) query = query.eq('account_id', accountId)
+      const { data, error } = await query
+      if (error) throw error
+      return data as MortgagePayment[]
+    },
+  })
+}
+
+export function useAutoCreateMortgagePayments(
+  accounts: Account[],
+  payments: MortgagePayment[],
+  isOwner: boolean
+) {
+  const qc = useQueryClient()
+  const month = currentMonth()
+
+  useEffect(() => {
+    if (!isOwner || accounts.length === 0) return
+
+    const mortgageAccounts = accounts.filter(a => a.type === 'mortgage' && a.is_active)
+    const missing = mortgageAccounts.filter(
+      a => !payments.some(p => p.account_id === a.id && p.month === month)
+    )
+    if (missing.length === 0) return
+
+    const rows = missing.flatMap(a => {
+      const lastPayment = payments
+        .filter(p => p.account_id === a.id && p.month < month)
+        .sort((x, y) => y.month.localeCompare(x.month))[0]
+      if (!lastPayment) return []
+      return [{
+        account_id: a.id,
+        month,
+        principal: lastPayment.principal ?? null,
+        extra_principal: null,
+        interest: lastPayment.interest ?? null,
+        escrow: lastPayment.escrow ?? null,
+        total_paid: (lastPayment.principal ?? 0) + (lastPayment.interest ?? 0) + (lastPayment.escrow ?? 0) || null,
+        date_paid: `${month}-${String(a.due_day).padStart(2, '0')}`,
+        notes: null,
+      }]
+    })
+    if (rows.length === 0) return
+
+    supabase
+      .from('mortgage_payments')
+      .upsert(rows as MortgagePaymentInsert[], { onConflict: 'account_id,month' })
+      .then(({ error }) => {
+        if (!error) qc.invalidateQueries({ queryKey: ['mortgage_payments'] })
+      })
+  }, [accounts, payments, isOwner, month, qc])
+}
+
+export function useUpsertMortgagePayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payment: Partial<MortgagePayment> & { account_id: string; month: string }) => {
+      const { data, error } = await supabase
+        .from('mortgage_payments')
+        .upsert(payment as MortgagePaymentInsert, { onConflict: 'account_id,month' })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mortgage_payments'] })
+    },
+  })
+}
+
+export function useDeleteMortgagePayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, accountId }: { id: string; accountId: string }) => {
+      const { error } = await supabase.from('mortgage_payments').delete().eq('id', id)
+      if (error) throw error
+      return accountId
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mortgage_payments'] })
+    },
+  })
+}
 
 export function useUpsertPayment() {
   const qc = useQueryClient()

@@ -79,6 +79,22 @@ export interface PromoAlert {
   promo_ends: string
 }
 
+// ─── Mortgage ─────────────────────────────────────────────────────────────────
+
+export interface MortgagePayment {
+  id: string
+  account_id: string
+  month: string            // 'YYYY-MM'
+  principal?: number | null
+  extra_principal?: number | null
+  interest?: number | null
+  escrow?: number | null
+  total_paid?: number | null
+  date_paid?: string | null
+  notes?: string | null
+  created_at?: string
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface AppUser {
