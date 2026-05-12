@@ -46,6 +46,7 @@ export const STATUS_LABELS: Record<PaymentStatus, string> = {
   unpaid: 'Unpaid',
   late: 'Late',
   autopay: 'Autopay',
+  split: 'Split',
   na: 'N/A',
 }
 
@@ -55,6 +56,7 @@ export const STATUS_VARIANTS: Record<PaymentStatus, string> = {
   unpaid: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   late: 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300',
   autopay: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  split: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
   na: 'bg-muted text-muted-foreground',
 }
 
@@ -107,9 +109,10 @@ export function getMonthSummary(payments: Payment[], month: string): MonthSummar
   const monthPayments = payments.filter(p => p.month === month && p.status !== 'na')
   return {
     month,
-    total_paid: monthPayments.reduce((s, p) => s + (p.amt_paid ?? 0), 0),
+    total_paid: monthPayments.reduce((s, p) =>
+      s + (p.status === 'split' ? (p.amt_due ?? 0) : (p.amt_paid ?? 0)), 0),
     total_due: monthPayments.reduce((s, p) => s + (p.amt_due ?? 0), 0),
-    paid_count: monthPayments.filter(p => p.status === 'paid' || p.status === 'autopay').length,
+    paid_count: monthPayments.filter(p => p.status === 'paid' || p.status === 'autopay' || p.status === 'split').length,
     unpaid_count: monthPayments.filter(p => p.status === 'unpaid').length,
     late_count: monthPayments.filter(p => p.status === 'late').length,
     partial_count: monthPayments.filter(p => p.status === 'partial').length,

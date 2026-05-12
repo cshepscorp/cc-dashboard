@@ -7,7 +7,7 @@ export type AccountType =
   | 'mortgage'
   | 'auto_loan'
 
-export type PaymentStatus = 'paid' | 'partial' | 'unpaid' | 'late' | 'autopay' | 'na'
+export type PaymentStatus = 'paid' | 'partial' | 'unpaid' | 'late' | 'autopay' | 'split' | 'na'
 
 export interface Account {
   id: string

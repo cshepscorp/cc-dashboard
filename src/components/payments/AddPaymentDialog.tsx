@@ -14,7 +14,7 @@ interface Props {
   existingPayment?: Payment
 }
 
-const STATUSES: PaymentStatus[] = ['paid', 'partial', 'unpaid', 'late', 'autopay', 'na']
+const STATUSES: PaymentStatus[] = ['paid', 'split', 'partial', 'unpaid', 'late', 'autopay', 'na']
 const FIXED_PAYMENT_TYPES = new Set(['installment', 'personal', 'auto_loan', 'mortgage'])
 
 function initialAmtDue(existingPayment?: Payment, defaultAccount?: Account): string {
