@@ -4,7 +4,6 @@ import type { Database } from '@/lib/database.types'
 import type { Account, Payment } from '@/types'
 
 type AccountInsert = Database['public']['Tables']['accounts']['Insert']
-type AccountUpdate = Database['public']['Tables']['accounts']['Update']
 type PaymentInsert = Database['public']['Tables']['payments']['Insert']
 
 // ─── Accounts ─────────────────────────────────────────────────────────────────
@@ -27,10 +26,12 @@ export function useAccounts() {
 export function useUpsertAccount() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (account: Partial<Account> & { id?: string }) => {
-      const { data, error } = account.id
-        ? await supabase.from('accounts').update(account as AccountUpdate).eq('id', account.id).select().single()
-        : await supabase.from('accounts').insert(account as AccountInsert).select().single()
+    mutationFn: async (account: Partial<Account> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('accounts')
+        .upsert(account as AccountInsert, { onConflict: 'id' })
+        .select()
+        .single()
       if (error) throw error
       return data
     },
