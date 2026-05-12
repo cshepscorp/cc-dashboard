@@ -12,12 +12,14 @@ import { PaidVsDueChart } from '@/components/dashboard/PaidVsDueChart'
 import { UpcomingDue } from '@/components/dashboard/UpcomingDue'
 import { PaymentTable } from '@/components/payments/PaymentTable'
 import { AddPaymentDialog } from '@/components/payments/AddPaymentDialog'
+import { PaymentDetailDialog } from '@/components/payments/PaymentDetailDialog'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { format, addMonths, subMonths, parseISO } from 'date-fns'
 
 export function DashboardPage() {
   const { isOwner } = useAuth()
   const [selectedMonth, setSelectedMonth] = useState(currentMonth())
+  const [detailOpen, setDetailOpen] = useState(false)
   const [addPaymentOpen, setAddPaymentOpen] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<typeof accounts[0] | undefined>()
   const [selectedPayment, setSelectedPayment] = useState<(typeof allPayments)[0] | undefined>()
@@ -95,7 +97,7 @@ export function DashboardPage() {
         onRowClick={(account, payment) => {
           setSelectedAccount(account)
           setSelectedPayment(payment)
-          setAddPaymentOpen(true)
+          setDetailOpen(true)
         }}
       />
 
@@ -108,6 +110,26 @@ export function DashboardPage() {
           <PaidVsDueChart payments={allPayments} />
         </div>
       </div>
+
+      {/* Detail card — opens on row click, edit button transitions to edit form */}
+      {selectedAccount && (
+        <PaymentDetailDialog
+          key={`detail-${selectedAccount.id}`}
+          open={detailOpen}
+          onClose={() => {
+            setDetailOpen(false)
+            setSelectedAccount(undefined)
+            setSelectedPayment(undefined)
+          }}
+          account={selectedAccount}
+          payment={selectedPayment}
+          month={selectedMonth}
+          onEdit={() => {
+            setDetailOpen(false)
+            setAddPaymentOpen(true)
+          }}
+        />
+      )}
 
       <AddPaymentDialog
         key={selectedAccount?.id ?? 'global'}

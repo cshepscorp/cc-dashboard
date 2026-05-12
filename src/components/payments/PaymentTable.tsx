@@ -4,7 +4,7 @@ import {
   ACCOUNT_TYPE_LABELS, getDueDate
 } from '@/lib/utils'
 import { format } from 'date-fns'
-import { ExternalLink, User } from 'lucide-react'
+import { ExternalLink, User, ChevronRight } from 'lucide-react'
 
 interface Props {
   accounts: Account[]
@@ -22,7 +22,9 @@ export function PaymentTable({ accounts, payments, month, onRowClick }: Props) {
         <h2 className="text-sm font-medium">Payment details</h2>
         <span className="text-xs text-muted-foreground">{activeAccounts.length} accounts</span>
       </div>
-      <div className="overflow-x-auto">
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
@@ -47,7 +49,6 @@ export function PaymentTable({ accounts, payments, month, onRowClick }: Props) {
                   className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer"
                   onClick={() => onRowClick?.(account, payment)}
                 >
-                  {/* Account name */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium">{account.name}</span>
@@ -66,46 +67,30 @@ export function PaymentTable({ accounts, payments, month, onRowClick }: Props) {
                       </p>
                     )}
                   </td>
-
-                  {/* Type */}
                   <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">
                     {ACCOUNT_TYPE_LABELS[account.type] ?? account.type}
                   </td>
-
-                  {/* Due date */}
                   <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">
                     {format(dueDate, 'MMM d')}
                   </td>
-
-                  {/* Amount due */}
                   <td className="px-3 py-3 text-right font-mono text-sm">
                     {payment?.amt_due != null ? formatCurrency(payment.amt_due) : '—'}
                   </td>
-
-                  {/* Paid */}
                   <td className="px-3 py-3 text-right font-mono text-sm">
                     {payment?.amt_paid != null ? formatCurrency(payment.amt_paid) : '—'}
                   </td>
-
-                  {/* Status badge */}
                   <td className="px-3 py-3">
                     {payment ? (
-                      <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_VARIANTS[payment.status]}`}
-                      >
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_VARIANTS[payment.status]}`}>
                         {STATUS_LABELS[payment.status]}
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </td>
-
-                  {/* Notes */}
                   <td className="px-3 py-3 text-xs text-muted-foreground max-w-[200px] truncate">
                     {payment?.notes ?? account.notes ?? ''}
                   </td>
-
-                  {/* Pay now link */}
                   <td className="px-3 py-3">
                     {account.portal_url && account.portal_url !== '#' && (
                       <a
@@ -125,6 +110,69 @@ export function PaymentTable({ accounts, payments, month, onRowClick }: Props) {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="md:hidden divide-y">
+        {activeAccounts.map(account => {
+          const payment = payments.find(p => p.account_id === account.id)
+          const dueDate = getDueDate(account, month)
+
+          return (
+            <div
+              key={account.id}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 active:bg-muted/30 transition-colors cursor-pointer"
+              onClick={() => onRowClick?.(account, payment)}
+            >
+              {/* Left: account info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-sm truncate">{account.name}</span>
+                  {account.is_personal && (
+                    <span title="Personal loan" className="text-purple-500 shrink-0">
+                      <User className="w-3 h-3" />
+                    </span>
+                  )}
+                  {account.last4 && (
+                    <span className="text-xs text-muted-foreground shrink-0">···{account.last4}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[11px] text-muted-foreground">Due {format(dueDate, 'MMM d')}</span>
+                  {payment?.amt_paid != null && (
+                    <span className="text-[11px] text-muted-foreground">
+                      · Paid {formatCurrency(payment.amt_paid)}
+                    </span>
+                  )}
+                  {payment?.amt_due != null && payment?.amt_paid == null && (
+                    <span className="text-[11px] text-muted-foreground">
+                      · Due {formatCurrency(payment.amt_due)}
+                    </span>
+                  )}
+                </div>
+                {account.promo_ends && (
+                  <p className="text-[10px] text-warning mt-0.5">
+                    0% ends {format(new Date(account.promo_ends), 'MMM yyyy')}
+                  </p>
+                )}
+              </div>
+
+              {/* Right: status + chevron */}
+              <div className="flex items-center gap-2 shrink-0">
+                {payment ? (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_VARIANTS[payment.status]}`}>
+                    {STATUS_LABELS[payment.status]}
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                    —
+                  </span>
+                )}
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
