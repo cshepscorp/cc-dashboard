@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { Account, Payment } from '@/types'
+import { currentMonth } from '@/lib/utils'
 
 type AccountInsert = Database['public']['Tables']['accounts']['Insert']
 type PaymentInsert = Database['public']['Tables']['payments']['Insert']
@@ -108,7 +109,9 @@ export function useAutoCreateAutopayPayments(
   const qc = useQueryClient()
 
   useEffect(() => {
-    if (!isOwner || accounts.length === 0) return
+    if (!isOwner || accounts.length === 0 || month !== currentMonth()) return
+
+    const todayDay = new Date().getDate()
 
     const missing = accounts.filter(
       a => a.is_autopay === true && a.is_active &&
@@ -116,16 +119,19 @@ export function useAutoCreateAutopayPayments(
     )
     if (missing.length === 0) return
 
-    const rows: PaymentInsert[] = missing.map(a => ({
-      account_id: a.id,
-      month,
-      status: 'autopay',
-      amt_due: a.monthly_payment ?? null,
-      amt_paid: a.monthly_payment ?? null,
-      date_paid: null,
-      confirmation: null,
-      notes: null,
-    }))
+    const rows: PaymentInsert[] = missing.map(a => {
+      const paid = todayDay >= a.due_day
+      return {
+        account_id: a.id,
+        month,
+        status: 'autopay',
+        amt_due: a.monthly_payment ?? null,
+        amt_paid: paid ? (a.monthly_payment ?? null) : null,
+        date_paid: paid ? `${month}-${String(a.due_day).padStart(2, '0')}` : null,
+        confirmation: null,
+        notes: null,
+      }
+    })
 
     supabase
       .from('payments')
