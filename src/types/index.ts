@@ -22,6 +22,7 @@ export interface Account {
   promo_apr?: number | null // 0 for 0% promos
   promo_ends?: string | null // ISO date string e.g. '2026-07-01'
   portal_url?: string | null
+  app_url?: string | null
   is_personal: boolean     // e.g. loan from parents
   is_autopay?: boolean     // auto-creates monthly payment record with status 'autopay'
   is_active: boolean

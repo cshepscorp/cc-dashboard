@@ -20,6 +20,7 @@ export type Database = {
           promo_apr: number | null
           promo_ends: string | null
           portal_url: string | null
+          app_url: string | null
           is_personal: boolean
           is_autopay: boolean
           is_active: boolean

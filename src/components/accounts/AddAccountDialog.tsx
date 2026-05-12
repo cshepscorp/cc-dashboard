@@ -33,6 +33,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
   const [promoApr, setPromoApr] = useState(existingAccount?.promo_apr?.toString() ?? '')
   const [promoEnds, setPromoEnds] = useState(existingAccount?.promo_ends ?? '')
   const [portalUrl, setPortalUrl] = useState(existingAccount?.portal_url ?? '')
+  const [appUrl, setAppUrl] = useState(existingAccount?.app_url ?? '')
   const [isPersonal, setIsPersonal] = useState(existingAccount?.is_personal ?? false)
   const [isAutopay, setIsAutopay] = useState(existingAccount?.is_autopay ?? false)
   const [monthlyPayment, setMonthlyPayment] = useState(existingAccount?.monthly_payment?.toString() ?? '')
@@ -65,6 +66,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
         promo_apr: promoApr !== '' ? parseFloat(promoApr) : null,
         promo_ends: promoEnds || null,
         portal_url: portalUrl || null,
+        app_url: appUrl || null,
         is_personal: isPersonal,
         is_autopay: isAutopay,
         is_active: true,
@@ -207,17 +209,30 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
             </div>
           </div>
 
-          {/* Portal URL */}
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground font-medium">Payment portal URL</label>
-            <input
-              type="url"
-              value={portalUrl}
-              onChange={e => setPortalUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full border rounded-md px-3 py-2 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              disabled={isLoading}
-            />
+          {/* Portal URL & App URL */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Payment portal URL</label>
+              <input
+                type="url"
+                value={portalUrl}
+                onChange={e => setPortalUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full border rounded-md px-3 py-2 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Mobile app URL</label>
+              <input
+                type="text"
+                value={appUrl}
+                onChange={e => setAppUrl(e.target.value)}
+                placeholder="e.g. chase://"
+                className="w-full border rounded-md px-3 py-2 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Monthly Payment & Payoff Date */}

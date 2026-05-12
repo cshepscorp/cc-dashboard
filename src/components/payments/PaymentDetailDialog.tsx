@@ -166,12 +166,20 @@ export function PaymentDetailDialog({ open, onClose, account, payment, month, on
             )}
           </div>
           <div className="flex gap-2">
+            {account.app_url && (
+              <a
+                href={account.app_url}
+                className="md:hidden flex items-center gap-1.5 px-3 py-2 text-sm rounded-md border hover:bg-secondary transition-colors"
+              >
+                Pay <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
             {account.portal_url && account.portal_url !== '#' && (
               <a
                 href={account.portal_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-md border hover:bg-secondary transition-colors"
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-md border hover:bg-secondary transition-colors ${account.app_url ? 'hidden md:flex' : ''}`}
               >
                 Pay <ExternalLink className="w-3.5 h-3.5" />
               </a>
