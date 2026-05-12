@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useAccounts } from '@/hooks/useData'
-import { useAllPayments } from '@/hooks/useData'
+import { useAccounts, useAllPayments, useAutoCreateAutopayPayments } from '@/hooks/useData'
 import { useAuth } from '@/hooks/useAuth'
 import { DEMO_ACCOUNTS } from '@/data/accounts.demo'
 import { REAL_ACCOUNTS } from '@/data/accounts.real'
@@ -30,6 +29,8 @@ export function DashboardPage() {
 
   const accounts = isOwner ? (liveAccounts ?? REAL_ACCOUNTS) : DEMO_ACCOUNTS
   const allPayments = isOwner ? (livePayments ?? SEED_PAYMENTS as any) : (SEED_PAYMENTS as any)
+
+  useAutoCreateAutopayPayments(accounts, allPayments, selectedMonth, isOwner)
 
   const monthPayments = allPayments.filter((p: any) => p.month === selectedMonth)
   const summary = getMonthSummary(allPayments, selectedMonth)

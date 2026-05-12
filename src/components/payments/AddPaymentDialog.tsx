@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { Account, Payment, PaymentStatus } from '@/types'
 import { useUpsertPayment, useDeletePayment } from '@/hooks/useData'
-import { STATUS_LABELS } from '@/lib/utils'
+import { STATUS_LABELS, getDueDate } from '@/lib/utils'
+import { format } from 'date-fns'
 import { X } from 'lucide-react'
 
 interface Props {
@@ -24,15 +25,37 @@ function initialAmtDue(existingPayment?: Payment, defaultAccount?: Account): str
   return ''
 }
 
+function initialAmtPaid(existingPayment?: Payment, defaultAccount?: Account): string {
+  if (existingPayment?.amt_paid != null) return existingPayment.amt_paid.toString()
+  if (defaultAccount?.is_autopay && defaultAccount?.monthly_payment) {
+    return defaultAccount.monthly_payment.toString()
+  }
+  return ''
+}
+
+function initialStatus(existingPayment?: Payment, defaultAccount?: Account): PaymentStatus {
+  if (existingPayment?.status) return existingPayment.status
+  if (defaultAccount?.is_autopay) return 'autopay'
+  return 'unpaid'
+}
+
+function initialDatePaid(existingPayment?: Payment, defaultAccount?: Account, month?: string): string {
+  if (existingPayment?.date_paid) return existingPayment.date_paid
+  if (defaultAccount?.is_autopay && month) {
+    return format(getDueDate(defaultAccount, month), 'yyyy-MM-dd')
+  }
+  return ''
+}
+
 export function AddPaymentDialog({ open, onClose, accounts, month, defaultAccount, existingPayment }: Props) {
   const upsert = useUpsertPayment()
   const remove = useDeletePayment()
 
   const [accountId, setAccountId] = useState(defaultAccount?.id ?? existingPayment?.account_id ?? '')
   const [amtDue, setAmtDue] = useState(initialAmtDue(existingPayment, defaultAccount))
-  const [amtPaid, setAmtPaid] = useState(existingPayment?.amt_paid?.toString() ?? '')
-  const [datePaid, setDatePaid] = useState(existingPayment?.date_paid ?? '')
-  const [status, setStatus] = useState<PaymentStatus>(existingPayment?.status ?? 'unpaid')
+  const [amtPaid, setAmtPaid] = useState(initialAmtPaid(existingPayment, defaultAccount))
+  const [datePaid, setDatePaid] = useState(initialDatePaid(existingPayment, defaultAccount, month))
+  const [status, setStatus] = useState<PaymentStatus>(initialStatus(existingPayment, defaultAccount))
   const [confirmation, setConfirmation] = useState(existingPayment?.confirmation ?? '')
   const [notes, setNotes] = useState(existingPayment?.notes ?? '')
   const [error, setError] = useState('')
@@ -41,10 +64,17 @@ export function AddPaymentDialog({ open, onClose, accounts, month, defaultAccoun
 
   const handleAccountChange = (id: string) => {
     setAccountId(id)
-    if (!amtDue) {
-      const acct = accounts.find(a => a.id === id)
-      if (acct?.monthly_payment && FIXED_PAYMENT_TYPES.has(acct.type)) {
+    const acct = accounts.find(a => a.id === id)
+    if (acct) {
+      if (!amtDue && acct.monthly_payment && FIXED_PAYMENT_TYPES.has(acct.type)) {
         setAmtDue(acct.monthly_payment.toString())
+      }
+      if (!amtPaid && acct.is_autopay && acct.monthly_payment) {
+        setAmtPaid(acct.monthly_payment.toString())
+      }
+      if (acct.is_autopay) {
+        setStatus('autopay')
+        if (!datePaid) setDatePaid(format(getDueDate(acct, month), 'yyyy-MM-dd'))
       }
     }
   }

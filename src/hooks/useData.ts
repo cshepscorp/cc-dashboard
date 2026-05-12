@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
@@ -97,6 +98,44 @@ export function useDeletePayment() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['payments'] }),
   })
 }
+
+export function useAutoCreateAutopayPayments(
+  accounts: Account[],
+  payments: Payment[],
+  month: string,
+  isOwner: boolean
+) {
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    if (!isOwner || accounts.length === 0) return
+
+    const missing = accounts.filter(
+      a => a.is_autopay === true && a.is_active &&
+        !payments.some(p => p.account_id === a.id && p.month === month)
+    )
+    if (missing.length === 0) return
+
+    const rows: PaymentInsert[] = missing.map(a => ({
+      account_id: a.id,
+      month,
+      status: 'autopay',
+      amt_due: a.monthly_payment ?? null,
+      amt_paid: a.monthly_payment ?? null,
+      date_paid: null,
+      confirmation: null,
+      notes: null,
+    }))
+
+    supabase
+      .from('payments')
+      .upsert(rows, { onConflict: 'account_id,month' })
+      .then(({ error }) => {
+        if (!error) qc.invalidateQueries({ queryKey: ['payments'] })
+      })
+  }, [accounts, payments, month, isOwner, qc])
+}
+
 
 export function useUpsertPayment() {
   const qc = useQueryClient()

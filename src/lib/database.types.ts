@@ -21,6 +21,7 @@ export type Database = {
           promo_ends: string | null
           portal_url: string | null
           is_personal: boolean
+          is_autopay: boolean
           is_active: boolean
           monthly_payment: number | null
           payoff_date: string | null

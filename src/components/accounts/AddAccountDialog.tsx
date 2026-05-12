@@ -34,6 +34,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
   const [promoEnds, setPromoEnds] = useState(existingAccount?.promo_ends ?? '')
   const [portalUrl, setPortalUrl] = useState(existingAccount?.portal_url ?? '')
   const [isPersonal, setIsPersonal] = useState(existingAccount?.is_personal ?? false)
+  const [isAutopay, setIsAutopay] = useState(existingAccount?.is_autopay ?? false)
   const [monthlyPayment, setMonthlyPayment] = useState(existingAccount?.monthly_payment?.toString() ?? '')
   const [payoffDate, setPayoffDate] = useState(existingAccount?.payoff_date ?? '')
   const [originalBalance, setOriginalBalance] = useState(existingAccount?.original_balance?.toString() ?? '')
@@ -65,6 +66,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
         promo_ends: promoEnds || null,
         portal_url: portalUrl || null,
         is_personal: isPersonal,
+        is_autopay: isAutopay,
         is_active: true,
         monthly_payment: monthlyPayment ? parseFloat(monthlyPayment) : null,
         payoff_date: payoffDate || null,
@@ -259,19 +261,34 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
             />
           </div>
 
-          {/* Is Personal Toggle */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is-personal"
-              checked={isPersonal}
-              onChange={e => setIsPersonal(e.target.checked)}
-              className="rounded border border-input"
-              disabled={isLoading}
-            />
-            <label htmlFor="is-personal" className="text-xs text-muted-foreground font-medium cursor-pointer">
-              Mark as personal loan (e.g. family loan)
-            </label>
+          {/* Toggles */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is-autopay"
+                checked={isAutopay}
+                onChange={e => setIsAutopay(e.target.checked)}
+                className="rounded border border-input"
+                disabled={isLoading}
+              />
+              <label htmlFor="is-autopay" className="text-xs text-muted-foreground font-medium cursor-pointer">
+                On autopay (auto-logs monthly payment as Autopay)
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is-personal"
+                checked={isPersonal}
+                onChange={e => setIsPersonal(e.target.checked)}
+                className="rounded border border-input"
+                disabled={isLoading}
+              />
+              <label htmlFor="is-personal" className="text-xs text-muted-foreground font-medium cursor-pointer">
+                Personal loan (e.g. family loan)
+              </label>
+            </div>
           </div>
 
           {/* Notes */}
