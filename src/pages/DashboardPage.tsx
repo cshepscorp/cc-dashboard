@@ -32,10 +32,14 @@ export function DashboardPage() {
 
   useAutoCreateAutopayPayments(accounts, allPayments, selectedMonth, isOwner)
 
-  const monthPayments = allPayments.filter((p: any) => p.month === selectedMonth)
-  const summary = getMonthSummary(allPayments, selectedMonth)
-  const upcoming = getUpcomingPayments(accounts, allPayments, selectedMonth)
-  const promoAlerts = getPromoAlerts(accounts)
+  const nonMortgageAccounts = accounts.filter(a => a.type !== 'mortgage')
+  const nonMortgageIds = new Set(nonMortgageAccounts.map(a => a.id))
+  const nonMortgagePayments = allPayments.filter((p: any) => nonMortgageIds.has(p.account_id))
+
+  const monthPayments = nonMortgagePayments.filter((p: any) => p.month === selectedMonth)
+  const summary = getMonthSummary(nonMortgagePayments, selectedMonth)
+  const upcoming = getUpcomingPayments(nonMortgageAccounts, nonMortgagePayments, selectedMonth)
+  const promoAlerts = getPromoAlerts(nonMortgageAccounts)
 
   const prevMonth = () => {
     const d = subMonths(parseISO(`${selectedMonth}-01`), 1)
@@ -79,8 +83,8 @@ export function DashboardPage() {
 
       {/* Alert strip */}
       <AlertStrip
-        accounts={accounts}
-        payments={allPayments}
+        accounts={nonMortgageAccounts}
+        payments={nonMortgagePayments}
         month={selectedMonth}
         promoAlerts={promoAlerts}
         onLatePaymentClick={(account, payment) => {
@@ -92,7 +96,7 @@ export function DashboardPage() {
 
       {/* Payment table — primary interaction */}
       <PaymentTable
-        accounts={accounts}
+        accounts={nonMortgageAccounts}
         payments={monthPayments}
         month={selectedMonth}
         onRowClick={(account, payment) => {
@@ -108,7 +112,7 @@ export function DashboardPage() {
           <UpcomingDue upcoming={upcoming} />
         </div>
         <div className="lg:col-span-2">
-          <PaidVsDueChart payments={allPayments} />
+          <PaidVsDueChart payments={nonMortgagePayments} />
         </div>
       </div>
 
