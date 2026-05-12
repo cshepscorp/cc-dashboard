@@ -53,7 +53,7 @@ export function AddAccountDialog({ open, onClose, existingAccount }: Props) {
     setIsLoading(true)
 
     try {
-      const accountData: Partial<Account> & { id?: string } = {
+      const accountData: Partial<Account> & { id: string } = {
         id: existingAccount?.id ?? toSlug(name),
         name,
         type,
