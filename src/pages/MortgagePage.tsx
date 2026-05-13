@@ -28,8 +28,7 @@ function MortgageSection({ account, payments, isOwner }: MortgageSectionProps) {
   const totalInterest = payments.reduce((s, p) => s + (p.interest ?? 0), 0)
   const totalEscrow = payments.reduce((s, p) => s + (p.escrow ?? 0), 0)
   const totalExtra = payments.reduce((s, p) => s + (p.extra_principal ?? 0), 0)
-  const estimatedRemaining =
-    account.original_balance != null ? account.original_balance - totalPrincipal : null
+
 
   const openAdd = () => {
     setSelectedPayment(undefined)
@@ -74,9 +73,9 @@ function MortgageSection({ account, payments, isOwner }: MortgageSectionProps) {
           </p>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground">Est. remaining</p>
+          <p className="text-xs text-muted-foreground">Current balance</p>
           <p className="text-base font-semibold">
-            {estimatedRemaining != null ? formatCurrency(estimatedRemaining) : <span className="text-muted-foreground text-sm">—</span>}
+            {account.current_balance != null ? formatCurrency(account.current_balance) : <span className="text-muted-foreground text-sm">Not set</span>}
           </p>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-1">
